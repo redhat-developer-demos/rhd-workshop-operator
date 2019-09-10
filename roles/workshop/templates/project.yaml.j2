@@ -1,0 +1,9 @@
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  annotations:
+    openshift.io/requester: "{{ 'user%03d' | format(item.1) }}"
+    openshift.io/display-name: "{{ (item.0+'-'+(item.1|string))|title }}"
+    openshift.io/description: "{{ (item.0+'-'+(item.1|string))|title + ' Project' }}"
+  name:  "{{item.0}}-{{item.1}}"
+spec: {}

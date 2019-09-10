@@ -1,0 +1,111 @@
+---
+- name: "Facts"
+  debug:
+    msg: "{{ansible_search_path}}"
+
+- name: "Create htpasswd file"
+  htpasswd:
+    path: "{{ lookup('env','HOME') }}/users.htpasswd"
+    name: "{{ 'user%03d' | format(item) }}"
+    password: "{{ users.password }}"
+  loop: "{{ range(users.from,(users.to+1),1)|list  }}"
+  register: htpasswd_out
+  when: users.create
+
+- name: "Add Cluster Admin"
+  htpasswd:
+    path: "{{ lookup('env','HOME') }}/users.htpasswd"
+    create: False
+    name: "ocpadmin"
+    password: "{{users.admin_password}}"
+  register: ocpadmin_added
+  when: htpasswd_out.changed
+
+- name: "Add Cluster Admin Role to ocpadmin"
+  k8s:
+    state: present
+    resource_definition: "{{ lookup('file','rb_ocpadmin.yaml') }}"
+  when: ocpadmin_added.changed
+
+- name: "Create OAuth httpasswd secret"
+  k8s:
+    state: present
+    definition: |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "htpass-secret"
+        namespace: "openshift-config"
+      data: 
+        htpasswd: "{{ lookup('file',(lookup('env','HOME')+'/users.htpasswd'))|b64encode }}"
+      type: Opaque
+  when: htpasswd_out.changed
+
+- name: "Create an httpasswd identity"
+  k8s:
+    state: present
+    resource_definition: "{{ lookup('file','htpasswd_provider.yaml') }}"
+  when: htpasswd_out.changed
+
+- name: "Apply Network Policy"
+  k8s:
+    state: present
+    resource_definition: "{{ lookup('file','network_policy.yaml') }}"
+  when: htpasswd_out.changed
+
+#####################################
+# Workshop Student Projects
+# Limits andQuotas
+# Role and Role binding
+#####################################
+- name: "Create Projects"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','project.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+- name: "Apply Project Default Limits"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','project_limits.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+- name: "Role Binding:: Project Admin"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','rb_project_admin.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+- name: "Create Workshop Student Role"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','workshop_student_project.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+- name: "Apply Workshop Student Role"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','rb_workshop_student_project.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+- name: "Role Binding:: Image Puller"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','rb_sa_image_pullers.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+- name: "Role Binding:: Image Builders"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','rb_sa_image_builders.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+- name: "Role Binding:: Deployers"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','rb_sa_deployers.yaml.j2') }}"
+  loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+
+############################
+## Operators
+############################

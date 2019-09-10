@@ -1,0 +1,6 @@
+---
+- version: v1alpha1
+  group: developers.redhat.com
+  kind: Workshop
+  #role: /opt/ansible/roles/workshop
+  role: /Users/kameshs/git/redhat-developer-demos/rhd-workshop-operator/roles/workshop
