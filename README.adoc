@@ -1,0 +1,77 @@
+= Red Hat Developers Workshop Operator
+
+A Kubernetes Operator to prepare the OpenShift workshop infrastructure for running Red Hat Developers Workshops
+
+[IMPORTANT]
+====
+The Operator is under development and may undergo rapid changes
+====
+
+== Deploy
+
+[source,bash,subs="attributes+,+macros"]
+----
+oc new-project rhd-workshop-infra
+oc apply -f deploy/crds/developers_v1alpha1_workshop_crd.yaml
+oc apply -f deploy/role_binding.yaml
+oc apply -f deploy/role.yaml
+oc apply -f deploy/service_account.yaml
+oc apply -f deploy/operator.yaml
+----
+
+== Custom Resource(CR) Attributes
+
+The following table shows the attributes of the CR
+
+[cols="3*^,3*.",options="header"]
+|===
+|**Attribute**|**Description**|**Default**
+| projects | The OpenShift namespaces to create|
+| users.create | To create workshop users | True
+| users.prefix | The prefix each user will have | user
+| users.password | The password for workshop user|
+| users.admin_password | The workshop cluster admin password |
+| from | The user range start | 0
+| to |  The user range end | 50
+| stack | The stacks to provision |
+| che.catalog_source | The Che Operator Catalog Source |
+| che.subscription   | The Che Cluster Subscription |
+| istio.subscription | The Servicemesh Subscription |
+| knative-serving.subscription | Knative Serving subscription |
+| knative-eventing.subscription | Knative Eventing subscription |
+| pipelines.subscription | OpenShift pipelines subscription |
+|===
+
+== Create a CR
+
+Create Kubernetes Custom Resource for the workshop
+
+[source,yaml,subs="attributes+,+macros"]
+----
+apiVersion: developers.redhat.com/v1alpha1
+kind: Workshop
+metadata:
+  name: example-workshop
+spec:
+  projects:
+    - tutorial
+  users:
+    create: true
+    prefix: 'user'
+    password: 'password'
+    admin_password: 'adminPassword'
+    from: 0
+    to: 3
+  stack:
+    - che:
+        catalog_source: che_csc_subscription.yaml
+        subscription: che_cluster.yaml
+    - istio:
+        subscription: istio.yaml
+    - knative-serving:
+        subscription: knative_serving.yaml
+    - pipelines:
+        subscription: pipelines.yaml
+    - knative-eventing:
+        subscription: knative_serving.yaml
+---
