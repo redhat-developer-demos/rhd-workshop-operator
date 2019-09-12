@@ -21,30 +21,56 @@ oc apply -f deploy/operator.yaml
 
 == Custom Resource(CR) Attributes
 
-The following table shows the attributes of the CR
+The following attributes are configurable via CR
 
-[cols="3*^,3*.",options="header"]
-|===
-|**Attribute**|**Description**|**Default**
-| projects | The OpenShift namespaces to create|
-| users.create | To create workshop users | True
-| users.prefix | The prefix each user will have | user
-| users.password | The password for workshop user|
-| users.admin_password | The workshop cluster admin password |
-| from | The user range start | 0
-| to |  The user range end | 50
-| stack | The stacks to provision |
-| che.catalog_source | The Che Operator Catalog Source |
-| che.subscription   | The Che Cluster Subscription |
-| istio.subscription | The Servicemesh Subscription |
-| knative-serving.subscription | Knative Serving subscription |
-| knative-eventing.subscription | Knative Eventing subscription |
-| pipelines.subscription | OpenShift pipelines subscription |
-|===
+* `create_projects`: flag to control whether to create workshop user OpenShift projects or not
+* `projects`: its the list of OpenShift that need to be created for each user
+
+== users 
+
+The user specific configurations
+   
+* `create`: Flag to create users or not, default: `false`
+* `prefix`: The prefix for the user, defaults to `user`
+* `password`: The password for workshop users, defaults `openshift`
+* `admin_password`: The OpenShift cluster-admin password defaults `superS3ret`
+* `from`: The start range of users count, defaults to `0`
+* `to`: The end range of users count, defaults to `50`
+
+== stacks
+
+The software packages to install, by default Eclipse Che will be installed.
+
+[NOTE]
+====
+All software packages will be installed using Kubernetes Operators. Please check https://operatorhub.io[Operator Hub] for more information
+====
+
+`che_version`: The Eclipse Che version to be used.
+
+The stacks divided based on `community` and `redhat` operators
+
+=== **community** 
+
+The operator uses **community-operators** as the source for the following packages:
+
+  * `knative-serving`
+  * `knative-eventing`
+  * `openshift-pipelines`
+
+
+=== **redhat**
+
+The operator uses **redhat-operators** as the source for the following packages:
+   
+   * `elastic-search`
+   * `jaeger`
+   * `kiali`
+   * `servicemesh`
 
 == Create a CR
 
-Create Kubernetes Custom Resource for the workshop
+The following is an example CR, remove the stacks which might not be needed for the project:
 
 [source,yaml,subs="attributes+,+macros"]
 ----
@@ -52,26 +78,43 @@ apiVersion: developers.redhat.com/v1alpha1
 kind: Workshop
 metadata:
   name: example-workshop
+  description: "Workshop Demo"
 spec:
+  create_projects: false
   projects:
     - tutorial
-  users:
+  users:    
     create: true
     prefix: 'user'
-    password: 'password'
-    admin_password: 'adminPassword'
+    password: 'openshift'
+    admin_password: 'superS3cret'
     from: 0
     to: 3
-  stack:
-    - che:
-        catalog_source: che_csc_subscription.yaml
-        subscription: che_cluster.yaml
-    - istio:
-        subscription: istio.yaml
-    - knative-serving:
-        subscription: knative_serving.yaml
-    - pipelines:
-        subscription: pipelines.yaml
-    - knative-eventing:
-        subscription: knative_serving.yaml
----
+  stacks:
+    che_version: 7.1.0
+    community:
+      - name: "knative-serving"
+        operator: "knative-serving-operator"
+        version: "0.7.1"
+      - name: "pipelines"
+        operator: "openshift-pipelines-operator"
+        version: "0.5.2"
+      - name: "knative-eventing"
+        operator: "knative-eventing-operator"
+        version: "0.7.0"
+    redhat:
+      - name: "elastic-search"
+        version: "4.1.14-201908291507"
+        operator: "elasticsearch-operator" 
+      - name: "jaeger"
+        version: "1.13.1"
+        operator: "jaeger-product"   
+      - name: "kiali"
+        version: "1.0.5"
+        operator: "kiali-ossm"
+        admin_username: "admin"
+        admin_password: "admin"
+      - name: "servicemesh"
+        version: "1.0.0"
+        operator: "servicemeshoperator"
+----
