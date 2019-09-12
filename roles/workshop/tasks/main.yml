@@ -129,8 +129,8 @@
    state: present
    definition: "{{ lookup('template','rh_catalog_sources.yaml.j2') }}"
 
-# - name: "Install Eclipse Che" 
-#   include_tasks: install_che.yaml
+- name: "Install Eclipse Che" 
+  include_tasks: install_che.yaml
 
 - name: "Get Stacks"
   set_fact:
