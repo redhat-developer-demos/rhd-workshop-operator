@@ -60,6 +60,24 @@
 # Limits andQuotas
 # Role and Role binding
 #####################################
+- name: "Create Workshop Students Group"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('template','workshop-students-group.yaml.j2') }}"
+  when: htpasswd_out.changed
+
+- name: "Create Workshop Students Role"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('file','workshop-student-roles.yaml') }}"
+  when: htpasswd_out.changed
+
+- name: "Apply Workshop Students Cluster Role"
+  k8s:
+    state: "{{ state }}"
+    definition: "{{ lookup('file','rb_workshop_students.yaml') }}"
+  when: htpasswd_out.changed
+
 - name: "Create Projects"
   k8s:
     state: "{{ state }}"

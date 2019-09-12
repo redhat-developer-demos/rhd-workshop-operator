@@ -12,12 +12,11 @@ The Operator is under development and may undergo rapid changes
 [source,bash,subs="attributes+,+macros"]
 ----
 oc new-project rhd-workshop-infra
-oc apply -f deploy/crds/developers_v1alpha1_workshop_crd.yaml
-oc apply -f deploy/role_binding.yaml
-oc apply -f deploy/role.yaml
-oc apply -f deploy/service_account.yaml
-oc adm policy add-cluster-role-to-user cluster-admin -Z rhd-workshop-operator
-oc apply -f deploy/operator.yaml
+oc apply -n rhd-workshop-infra -f deploy/service_account.yaml
+oc apply -n rhd-workshop-infra -f deploy/role.yaml
+oc apply -n rhd-workshop-infra -f deploy/role_binding.yaml
+oc apply -n rhd-workshop-infra -f deploy/crds/developers_v1alpha1_workshop_crd.yaml
+oc apply -n rhd-workshop-infra -f deploy/operator.yaml
 ----
 
 == Custom Resource(CR) Attributes

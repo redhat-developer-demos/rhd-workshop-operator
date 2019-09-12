@@ -1,0 +1,8 @@
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: workshop-students
+users:
+{% for u in range(users.from,(users.to+1),1) %}
+- {{ 'user%03d' | format(u) }}
+{% endfor %}

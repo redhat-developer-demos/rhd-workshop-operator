@@ -3,6 +3,7 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: rhd-workshop-operator
+  namespace: rhd-workshop-infra
 rules:
 - apiGroups:
   - ""
