@@ -82,7 +82,7 @@ metadata:
   name: example-workshop
   description: "Workshop Demo"
 spec:
-  create_projects: false
+  create_projects: True
   projects:
     - tutorial
   users:    
