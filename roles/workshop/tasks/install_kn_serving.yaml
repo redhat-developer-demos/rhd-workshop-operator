@@ -1,0 +1,26 @@
+- name: "Knative Serving Operator Fact"
+  vars:
+    stack_kn_serving_query: "community[?name=='knative-serving'] | [0]"
+  set_fact:
+    stack_kn_serving: "{{ stacks|json_query(stack_kn_serving_query) }}"
+
+### Knative Serving
+
+- name: "Create Knative Serving subscription"
+  k8s:
+   state: present
+   definition: "{{ lookup('file','subscriptions/knative_serving/subscription.yaml') }}"
+  register: kn_serving_sub_created
+
+- name: "Lookup Knative Serving csv"
+  vars:
+    kn_serving_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='knative-serving-operator.v'+stack_kn_serving.version, namespace='openshift-operators' ) }}"
+  block:
+  - debug:
+      msg: "Waiting Knative Serving csv to be available"
+    until: kn_serving_csv_lookup.status is defined and kn_serving_csv_lookup.status.phase == 'Succeeded' and kn_serving_csv_lookup.status.reason == 'InstallSucceeded'
+    retries: 6
+    delay: 10
+  - name: "Set Knative Serving  csv fact"
+    set_fact:
+     kn_serving_csv: "{{kn_serving_csv_lookup }}"

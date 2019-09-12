@@ -16,6 +16,7 @@ oc apply -f deploy/crds/developers_v1alpha1_workshop_crd.yaml
 oc apply -f deploy/role_binding.yaml
 oc apply -f deploy/role.yaml
 oc apply -f deploy/service_account.yaml
+oc adm policy add-cluster-role-to-user cluster-admin -Z rhd-workshop-operator
 oc apply -f deploy/operator.yaml
 ----
 
@@ -47,6 +48,7 @@ All software packages will be installed using Kubernetes Operators. Please check
 ====
 
 `che_version`: The Eclipse Che version to be used.
+`install`: Whether to install the software stacks or not, defaults to `true`
 
 The stacks divided based on `community` and `redhat` operators
 

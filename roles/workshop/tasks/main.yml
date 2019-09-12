@@ -30,6 +30,7 @@
 - name: "Create OAuth httpasswd secret"
   k8s:
     state: present
+    force: true
     definition: |
       apiVersion: v1
       kind: Secret
@@ -132,6 +133,7 @@
 
 - name: "Install Eclipse Che" 
   include_tasks: install_che.yaml
+  when: stacks.install
 
 - name: "Get Stacks"
   set_fact:
@@ -139,4 +141,16 @@
 
 - name: "Install Servicemesh" 
   include_tasks: install_servicemesh.yaml
-  when: "'servicemesh' in stack_names"
+  when: "stacks.install and 'servicemesh' in stack_names"
+
+- name: "Install Knative Serving" 
+  include_tasks: install_kn_serving.yaml
+  when: "stacks.install and  'knative-serving' in stack_names"
+
+- name: "Install OpenShift Pipelines" 
+  include_tasks: install_pipelines.yaml
+  when: "stacks.install and 'pipelines' in stack_names"
+
+- name: "Install Knative Eventing" 
+  include_tasks: install_kn_eventing.yaml
+  when: "stacks.install and  'knative-eventing' in stack_names"

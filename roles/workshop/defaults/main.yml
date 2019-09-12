@@ -8,4 +8,5 @@ users:
   password: 'openshfit'
   admin_password: 'superS3cret'
 stacks:
+  install: True
   che_version: 7.1.0
