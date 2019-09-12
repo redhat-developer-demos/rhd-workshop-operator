@@ -47,11 +47,12 @@
     resource_definition: "{{ lookup('file','htpasswd_provider.yaml') }}"
   when: htpasswd_out.changed
 
-- name: "Apply Network Policy"
-  k8s:
-    state: present
-    resource_definition: "{{ lookup('file','network_policy.yaml') }}"
-  when: htpasswd_out.changed
+# TODO Check if needed
+# - name: "Apply Network Policy"
+#   k8s:
+#     state: present
+#     resource_definition: "{{ lookup('file','network_policy.yaml') }}"
+#   when: htpasswd_out.changed
 
 #####################################
 # Workshop Student Projects
