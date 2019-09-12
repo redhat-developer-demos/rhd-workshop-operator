@@ -85,24 +85,24 @@ spec:
   projects:
     - tutorial
   users:    
-    create: true
+    create: True
     prefix: 'user'
     password: 'openshift'
     admin_password: 'superS3cret'
     from: 0
-    to: 3
+    to: 50
   stacks:
     che_version: 7.1.0
     community:
       - name: "knative-serving"
         operator: "knative-serving-operator"
         version: "0.7.1"
+      - name: "knative-eventing"
+        operator: "knative-eventing-operator"
+        version: "0.7.1"
       - name: "pipelines"
         operator: "openshift-pipelines-operator"
         version: "0.5.2"
-      - name: "knative-eventing"
-        operator: "knative-eventing-operator"
-        version: "0.7.0"
     redhat:
       - name: "elastic-search"
         version: "4.1.14-201908291507"

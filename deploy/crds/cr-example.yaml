@@ -4,17 +4,24 @@ metadata:
   name: example-workshop
   description: "Workshop Demo"
 spec:
-  create_projects: false
+  create_projects: True
   projects:
-    - demo
+    - tutorial
   users:    
-    create: true
-    password: 'password'
-    admin_password: 'superpassword'
+    create: True
+    prefix: 'user'
+    password: 'openshift'
+    admin_password: 'superS3cret'
+    from: 0
+    to: 50
   stacks:
+    che_version: 7.1.0
     community:
       - name: "knative-serving"
         operator: "knative-serving-operator"
+        version: "0.7.1"
+      - name: "knative-eventing"
+        operator: "knative-eventing-operator"
         version: "0.7.1"
       - name: "pipelines"
         operator: "openshift-pipelines-operator"
