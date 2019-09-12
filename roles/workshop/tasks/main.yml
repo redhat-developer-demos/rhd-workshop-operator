@@ -63,49 +63,71 @@
     state: "{{ state }}"
     definition: "{{ lookup('template','project.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  register: projects_created
+  when: create_projects or htpasswd_out.changed
 
 - name: "Apply Project Default Limits"
   k8s:
     state: "{{ state }}"
     definition: "{{ lookup('template','project_limits.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  when: projects_created.changed
 
 - name: "Role Binding:: Project Admin"
   k8s:
     state: "{{ state }}"
     definition: "{{ lookup('template','rb_project_admin.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  when: projects_created.changed
 
 - name: "Create Workshop Student Role"
   k8s:
     state: "{{ state }}"
     definition: "{{ lookup('template','workshop_student_project.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  when: projects_created.changed
 
 - name: "Apply Workshop Student Role"
   k8s:
     state: "{{ state }}"
     definition: "{{ lookup('template','rb_workshop_student_project.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  when: projects_created.changed
 
 - name: "Role Binding:: Image Puller"
   k8s:
     state: "{{ state }}"
     definition: "{{ lookup('template','rb_sa_image_pullers.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  when: projects_created.changed
 
 - name: "Role Binding:: Image Builders"
   k8s:
     state: "{{ state }}"
     definition: "{{ lookup('template','rb_sa_image_builders.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  when: projects_created.changed
 
 - name: "Role Binding:: Deployers"
   k8s:
     state: "{{ state }}"
     definition: "{{ lookup('template','rb_sa_deployers.yaml.j2') }}"
   loop: "{{ projects|product(range(users.from,(users.to+1),1)|list)|list  }}"
+  when: projects_created.changed
 
 ############################
 ## Operators
 ############################
+
+- name: "Create Community Catalog Sources"
+  k8s:
+   state: present
+   definition: "{{ lookup('template','catalog_sources.yaml.j2') }}"
+
+# - name: "Create Red Hat Catalog Sources"
+#   k8s:
+#    state: present
+#    definition: "{{ lookup('template','rh_catalog_sources.yaml.j2') }}"
+
+- name: "Install Eclipse Che" 
+  include_tasks: install_che.yaml

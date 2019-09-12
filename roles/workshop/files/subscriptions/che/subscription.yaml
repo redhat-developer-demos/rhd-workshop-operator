@@ -25,5 +25,6 @@ metadata:
 spec:
   channel: stable
   name: eclipse-che
+  # add csv info to pin to version
   source:  rhd-workshop-che
   sourceNamespace: che

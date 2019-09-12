@@ -8,8 +8,8 @@ spec:
     cheImageTag: ''
     devfileRegistryImage: ''
     pluginRegistryImage: ''
-    tlsSupport: false
-    selfSignedCert: false
+    tlsSupport: true
+    selfSignedCert: true
   database:
     externalDb: false
     chePostgresHostname: ''
