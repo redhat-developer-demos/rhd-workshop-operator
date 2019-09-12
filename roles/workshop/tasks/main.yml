@@ -143,12 +143,18 @@
   k8s:
    state: present
    definition: "{{ lookup('template','catalog_sources.yaml.j2') }}"
+  when: stacks.install
 
 - name: "Create Red Hat Catalog Sources"
   k8s:
    state: present
    definition: "{{ lookup('template','rh_catalog_sources.yaml.j2') }}"
+  when: stacks.install
 
+- name: "Install Image Cachier" 
+  include_tasks: install_image_cachier.yaml
+  when: stacks.install
+  
 - name: "Install Eclipse Che" 
   include_tasks: install_che.yaml
   when: stacks.install

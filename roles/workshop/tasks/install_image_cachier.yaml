@@ -1,0 +1,16 @@
+- name: "Create Image Puller Service Account"
+  k8s:
+   state: present
+   definition: "{{ lookup('file','apps/image_puller/sa.yaml') }}"
+
+- name: "Create Image Puller Configmaps"
+  k8s:
+   state: present
+   definition: "{{ lookup('template','apps/image_puller/cm.yaml.j2') }}"
+  register: caches_added
+
+- name: "Deploy Image Puller Application"
+  k8s:
+   state: present
+   definition: "{{ lookup('file','apps/image_puller/dc.yaml') }}"
+  when: caches_added.changed

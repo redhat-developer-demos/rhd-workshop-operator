@@ -125,13 +125,9 @@
       msg: "Waiting Servicemesh Pods to be running"
     until: istio_pods_lookup and (istio_pods_lookup | json_query(pod_status_query)|unique == ["Running"])
     register: all_istio_pods_up
+    ignore_errors: true
     retries: 60
     delay: 20
   - name: "Set Servicemesh pods statuses fact"
     set_fact:
       servicemesh_pods_statuses: "{{ istio_pods_lookup }}"
-
-- name: "Servicemesh setup completed"
-  debug:
-    msg: "Successfully completed Red Hat Servicemesh setup"
-  when: not all_istio_pods_up.failed
