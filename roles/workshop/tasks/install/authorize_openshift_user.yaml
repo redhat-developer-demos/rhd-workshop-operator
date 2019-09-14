@@ -7,6 +7,7 @@
     url: "{{openshift_api_uri}}"
     url_username: "{{username}}"
     url_password: "{{users.password}}"
+    validate_certs: no
     headers:
       X-CSRF-Token: "{{'rhdworkshopinfra'|to_uuid}}"
   register: user_token_resp
