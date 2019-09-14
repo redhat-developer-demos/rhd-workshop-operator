@@ -8,19 +8,19 @@
 
 - name: "Create OpenShift Pipelines subscription"
   k8s:
-   state: present
-   definition: "{{ lookup('file','subscriptions/pipelines/subscription.yaml') }}"
+    state: present
+    definition: "{{ lookup('file','subscriptions/pipelines/subscription.yaml') }}"
   register: pipelines_sub_created
 
 - name: "Lookup OpenShift Pipelines csv"
   vars:
     pipelines_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='openshift-pipelines-operator.v'+stack_pipelines.version, namespace='openshift-operators' ) }}"
   block:
-  - debug:
-      msg: "Waiting OpenShift Pipelines csv to be available"
-    until: pipelines_csv_lookup.status is defined and pipelines_csv_lookup.status.phase == 'Succeeded' and pipelines_csv_lookup.status.reason == 'InstallSucceeded'
-    retries: 8
-    delay: 10
-  - name: "Set OpenShift Pipelines  csv fact"
-    set_fact:
-     pipelines_csv: "{{pipelines_csv_lookup }}"
+    - debug:
+        msg: "Waiting OpenShift Pipelines csv to be available"
+      until: pipelines_csv_lookup.status is defined and pipelines_csv_lookup.status.phase == 'Succeeded' and pipelines_csv_lookup.status.reason == 'InstallSucceeded'
+      retries: 8
+      delay: 10
+    - name: "Set OpenShift Pipelines  csv fact"
+      set_fact:
+        pipelines_csv: "{{pipelines_csv_lookup }}"

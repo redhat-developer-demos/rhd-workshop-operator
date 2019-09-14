@@ -9,7 +9,7 @@ spec:
     devfileRegistryImage: ''
     pluginRegistryImage: ''
     tlsSupport: true
-    selfSignedCert: true
+    selfSignedCert: false
   database:
     externalDb: false
     chePostgresHostname: ''

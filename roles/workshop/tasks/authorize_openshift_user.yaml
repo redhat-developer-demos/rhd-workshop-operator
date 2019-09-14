@@ -1,0 +1,20 @@
+- name: "Set user name"
+  set_fact:
+    username: "{{'user%03d' | format(item) }}"
+
+- name: "Authorize Openshift User {{username}}"
+  uri:
+    url: "{{openshift_api_uri}}"
+    url_username: "{{username}}"
+    url_password: "{{users.password}}"
+    headers:
+      X-CSRF-Token: "{{'rhdworkshopinfra'|to_uuid}}"
+  register: user_token_resp
+
+- name: "Parse user access token"
+  set_fact:
+    user_access_token: "{{ user_token_resp.url | urlsplit('fragment') | regex_search('^access_token=([\\w*\\d*-]*)')}}"
+
+- name: "Add to the user list"
+  set_fact:
+    openshift_user_tokens: "{{ openshift_user_tokens | combine( { username: user_access_token.split('=')[1] } ) }}"

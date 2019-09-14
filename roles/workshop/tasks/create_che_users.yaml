@@ -1,0 +1,56 @@
+- name: "Get Keycloak admin password fact"
+  vars:
+    keycloak_dc: "{{ lookup('k8s',kind='Deployment',namespace='che',resource_name='keycloak')}}"
+    kc_admin_password_query: "spec.template.spec.containers[?name=='keycloak'] | [0] | env[?name=='KEYCLOAK_PASSWORD'].value | [0] "
+  set_fact:
+    keycloak_admin_password: "{{ keycloak_dc | json_query(kc_admin_password_query) }}"
+
+# - debug:
+#     var: keycloak_admin_password
+
+- name: "Lookup Keycloak URL"
+  set_fact:
+    che_keycloak_route: "{{ lookup('k8s', api_version='route.openshift.io/v1',kind='Route',resource_name='keycloak',namespace='che') }}"
+
+- name: "Keycloak Master Realm URL"
+  set_fact:
+    keycloak_base_uri: "{{'https://'+ che_keycloak_route.spec.host +'/auth' }}"
+    keycloak_master_realm_uri: "{{'https://'+ che_keycloak_route.spec.host +'/auth/realms/master/protocol/openid-connect/token' }}"
+    keycloak_che_realm_uri: "{{'https://'+ che_keycloak_route.spec.host +'/auth/realms/che/protocol/openid-connect/token' }}"
+    keycloak_che_realm_users_uri: "{{'https://'+ che_keycloak_route.spec.host +'/auth/admin/realms/che/users' }}"
+    openshift_api_uri: "{{'https://' + openshift_api_server + '/oauth/authorize?client_id=openshift-challenging-client&response_type=token' }}"
+
+- name: "Enable Keycloak OpenShift IDP Token Exchange"
+  include_tasks: enable_che_kc_openshift_token_exchange.yaml
+  when: enable_che_keycloak_token_exchange
+
+#######
+## Create Che User in Keycloak
+######
+- name: "Initialize OpenShift User Tokens"
+  set_fact:
+    openshift_user_tokens: {}
+
+- name: "Create Che User"
+  include_tasks: authorize_openshift_user.yaml
+  loop: "{{ range(users.from,(users.to+1),1)|list  }}"
+
+- name: "Get Keycloak Admin Token"
+  uri:
+    url: "{{keycloak_master_realm_uri}}"
+    method: "POST"
+    return_content: yes
+    body_format: "form-urlencoded"
+    body:
+      grant_type: password
+      client_id: admin-cli
+      username: admin
+      password: "{{keycloak_admin_password}}"
+  register: admin_token_resp_raw
+
+- name: "Parse Keycloak Admin Token Response"
+  set_fact:
+    admin_token_resp: "{{ admin_token_resp_raw.content | from_json }}"
+
+- include_tasks: link_che_user_with_idp.yaml
+  loop: "{{ openshift_user_tokens | dict2items }}"

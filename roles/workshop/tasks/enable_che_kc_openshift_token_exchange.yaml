@@ -1,0 +1,160 @@
+- name: "Get Keycloak Admin Token"
+  uri:
+    url: "{{keycloak_master_realm_uri}}"
+    method: "POST"
+    return_content: yes
+    body_format: "form-urlencoded"
+    body:
+      grant_type: password
+      client_id: admin-cli
+      username: admin
+      password: "{{keycloak_admin_password}}"
+  register: admin_token_resp_raw
+
+- name: "Set Keycloak Admin token"
+  set_fact:
+    kc_admin_access_token: "{{ admin_token_resp_raw.json | json_query('access_token') }}"
+
+- name: "Enable token_exchange for IDP {{kc_idp_name}}"
+  vars:
+    kc_api_base_url: "{{keycloak_base_uri+'/admin/realms/'}}"
+    kc_idp_name: "openshift-v4"
+    kc_realm_name: "che"
+    kc_token_xchange_client: che-public
+    realm_base_api_url: "{{ kc_api_base_url + kc_realm_name }}"
+    realm_idp_api_url: "{{ realm_base_api_url + '/identity-provider/instances/' }}"
+    idp_instance_url: "{{ realm_idp_api_url + kc_idp_name }}"
+    token_xchange_query: 'scopePermissions."token-exchange"'
+    token_xchange_scope_query: "[?name=='token-exchange'].id | [0]"
+    realm_mgmt_query: "[?clientId == 'realm-management'].id | [0]"
+    id_query: "[*].id | [0]"
+  block:
+    - name: "Get the IDP {{kc_idp_name}}"
+      uri:
+        url: "{{ idp_instance_url }}"
+        method: "GET"
+        return_content: yes
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+      register: idp_resp_raw
+
+    - name: "Get IDP {{kc_idp_name}} id "
+      set_fact:
+        kc_idp_id: "{{idp_resp_raw.json|json_query('internalId')}}"
+
+    - name: "Token Exchange Permissions IDP {{kc_idp_name}}"
+      uri:
+        url: "{{ idp_instance_url + '/management/permissions' }}"
+        method: "PUT"
+        return_content: yes
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+        body_format: "json"
+        body:
+          enabled: true
+      register: token_exchange_permissions_resp_raw
+
+    - name: "Set token exchange resource facts"
+      set_fact:
+        token_exchange_resource: "{{ token_exchange_permissions_resp_raw.json|json_query('resource') }}"
+        token_exchange_permission_id: "{{ token_exchange_permissions_resp_raw.json|json_query(token_xchange_query) }}"
+
+    - name: "Get Realm Management Client Id"
+      uri:
+        url: "{{ realm_base_api_url +'/clients' }}"
+        method: "GET"
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+        return_content: yes
+      register: realm_clients_resp_raw
+
+    - name: "Set realm management client id"
+      set_fact:
+        realm_management_client_id: "{{realm_clients_resp_raw.json | json_query(realm_mgmt_query) }}"
+
+    # - debug:
+    #     var: realm_management_client_id
+
+    - name: "Create new Client Policy "
+      uri:
+        url: "{{ realm_base_api_url +'/clients/' + realm_management_client_id + '/authz/resource-server/policy/client'  }}"
+        method: "POST"
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+        return_content: yes
+        body_format: json
+        body:
+          type: client
+          logic: POSITIVE
+          decisionStrategy: UNANIMOUS
+          name: "{{kc_token_xchange_client}}"
+          clients: ["{{kc_token_xchange_client}}"]
+        status_code:
+          - 201
+          - 409
+
+    - name: "Get Token Exchange Policy"
+      uri:
+        url: "{{ realm_base_api_url +'/clients/' + realm_management_client_id + '/authz/resource-server/policy/client?name=' + kc_token_xchange_client  }}"
+        method: "GET"
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+        return_content: yes
+      register: token_exchange_policy_resp_raw
+
+    - name: "Set token exchange policy id"
+      set_fact:
+        token_exchange_policy_id: "{{token_exchange_policy_resp_raw.json | json_query(id_query)}}"
+
+    - name: "Get Token Exchange Permission"
+      uri:
+        url: "{{ realm_base_api_url +'/clients/' + realm_management_client_id + '/authz/resource-server/permission/scope/' + token_exchange_permission_id  }}"
+        method: "GET"
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+        return_content: yes
+      register: token_exchange_permission_resp_raw
+
+    - name: "Set token exchange permission id"
+      set_fact:
+        token_exchange_permission: "{{token_exchange_permission_resp_raw.json}}"
+
+    - name: "Get Token Exchange Scope"
+      uri:
+        url: "{{ realm_base_api_url +'/clients/' + realm_management_client_id + '/authz/resource-server/resource/' + token_exchange_resource + '/scopes'  }}"
+        method: "GET"
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+        return_content: yes
+      register: token_exchange_scope_resp_raw
+
+    - name: "Get Token Exchange Scope Id"
+      set_fact:
+        token_exchange_scope_id: "{{token_exchange_scope_resp_raw.json| json_query(token_xchange_scope_query)}}"
+
+    - name: "Set token exchange policy id"
+      set_fact:
+        req_body: "{{token_exchange_permission | combine(
+          {
+          'resources':[token_exchange_resource],
+          'scopes':[token_exchange_scope_id],
+          'policies':[token_exchange_policy_id]
+          }
+          )}}"
+
+    # - debug:
+    #     var: req_body
+    #     verbosity: 0
+
+    - name: "Associate token exchange permissions with client "
+      uri:
+        url: "{{ realm_base_api_url +'/clients/' + realm_management_client_id + '/authz/resource-server/permission/scope/' + token_exchange_permission_id  }}"
+        method: "PUT"
+        headers:
+          Authorization: "Bearer {{kc_admin_access_token}}"
+        body_format: json
+        body: "{{req_body}}"
+        return_content: yes
+        status_code:
+          - 201
+          - 409

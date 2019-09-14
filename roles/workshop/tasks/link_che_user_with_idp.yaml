@@ -1,0 +1,88 @@
+# - debug:
+#     msg: "{{item.key}} = {{item.value}}"
+#     verbosity: 0
+- name: "Link Che user with IDP :: {{item.key}}"
+  block:
+    - name: "Create Che User {{item.key}} "
+      uri:
+        url: "{{keycloak_che_realm_uri}}"
+        method: "POST"
+        return_content: yes
+        body_format: "form-urlencoded"
+        body:
+          grant_type: "urn:ietf:params:oauth:grant-type:token-exchange"
+          subject_issuer: "openshift-v4"
+          client_id: "che-public"
+          subject_token: "{{item.value}}"
+          subject_token_type: "urn:ietf:params:oauth:token-type:access_token"
+      register: subject_token_resp_raw
+
+    - name: "Get User Id :: {{item.key}} "
+      uri:
+        url: "{{keycloak_che_realm_users_uri}}?username={{item.key}}"
+        method: GET
+        return_content: yes
+        headers:
+          Authorization: "Bearer {{ admin_token_resp.access_token }}"
+      register: user_get_resp_raw
+
+    - set_fact:
+        user_resp: "{{ user_get_resp_raw.content | from_json }}"
+
+    - name: "Update User Info :: {{item.key}}"
+      uri:
+        url: "{{ keycloak_che_realm_users_uri +'/' + user_resp[0].id }}"
+        method: PUT
+        return_content: yes
+        body_format: json
+        headers:
+          Authorization: "Bearer {{ admin_token_resp.access_token }}"
+        body:
+          email: "{{item.key +'@example.com'}}"
+          firstName: "{{item.key}}"
+          lastName: "{{item.key}}"
+          enabled: "true"
+          emailVerified: "true"
+        status_code:
+          - 204
+          - 409
+      register: user_put_resp_raw
+  # - debug:
+  #    var: user_put_resp_raw
+  #    verbosity: 0
+  rescue:
+    ## Issue a refresh token call and get the new access_token
+    - name: "Refresh the Admin Token"
+      uri:
+        url: "{{keycloak_master_realm_uri}}"
+        method: "POST"
+        return_content: yes
+        body_format: "form-urlencoded"
+        body:
+          grant_type: "refresh_token"
+          client_id: admin-cli
+          refresh_token: "{{admin_token_resp.refresh_token}}"
+      register: admin_token_resp_raw
+      when: user_get_resp_raw.status == 401 or user_put_resp_raw.status == 401
+
+    - set_fact:
+        admin_token_resp: "{{ admin_token_resp_raw.content | from_json }}"
+
+    - name: "Retry Updating User Info :: {{item.key}}"
+      uri:
+        url: "{{ keycloak_che_realm_users_uri +'/' + user_resp[0].id }}"
+        method: PUT
+        return_content: yes
+        body_format: json
+        headers:
+          Authorization: "Bearer {{ admin_token_resp.access_token }}"
+        body:
+          email: "{{item.key +'@example.com'}}"
+          firstName: "{{item.key}}"
+          lastName: "{{item.key}}"
+          enabled: "true"
+          emailVerified: "true"
+        status_code:
+          - 204
+          - 409
+      register: user_put_resp_raw

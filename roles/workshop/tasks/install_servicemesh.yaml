@@ -2,113 +2,113 @@
   vars:
     stack_es_query: "redhat[?name=='elastic-search'] | [0]"
   set_fact:
-      stack_elastic_search: "{{ stacks|json_query(stack_es_query) }}"
+    stack_elastic_search: "{{ stacks|json_query(stack_es_query) }}"
 
 - name: "Jaeger Operator Fact"
   vars:
     stack_jaeger_query: "redhat[?name=='jaeger'] | [0]"
   set_fact:
-      stack_jaeger: "{{ stacks|json_query(stack_jaeger_query) }}"
+    stack_jaeger: "{{ stacks|json_query(stack_jaeger_query) }}"
 
 - name: "Kiali Operator Fact"
   vars:
     stack_kiali_query: "redhat[?name=='kiali'] | [0]"
   set_fact:
-      stack_kiali: "{{ stacks|json_query(stack_kiali_query) }}"
+    stack_kiali: "{{ stacks|json_query(stack_kiali_query) }}"
 
 - name: "Servicemesh Operator Fact"
   vars:
     stack_servicemesh_query: "redhat[?name=='servicemesh'] | [0]"
   set_fact:
-      stack_servicemesh: "{{ stacks|json_query(stack_servicemesh_query) }}"
+    stack_servicemesh: "{{ stacks|json_query(stack_servicemesh_query) }}"
 
 - name: "Create Istio Project"
   k8s:
-   state: present
-   api_version: "project.openshift.io/v1"
-   kind: "Project"
-   name: "istio-system"
+    state: present
+    api_version: "project.openshift.io/v1"
+    kind: "Project"
+    name: "istio-system"
 
 ### Elastic Search
 
 - name: "Create Elastic Search subscription"
   k8s:
-   state: present
-   definition: "{{ lookup('file','subscriptions/elastic_search/subscription.yaml') }}"
+    state: present
+    definition: "{{ lookup('file','subscriptions/elastic_search/subscription.yaml') }}"
   register: elastic_search_sub_created
 
 - name: "Lookup Elastic Search csv"
   vars:
-   elastic_search_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='elasticsearch-operator.'+stack_elastic_search.version, namespace='openshift-operators' ) }}"
+    elastic_search_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='elasticsearch-operator.'+stack_elastic_search.version, namespace='openshift-operators' ) }}"
   block:
-  - debug:
-      msg: "Waiting Elastic Search Che csv to be available"
-    until: elastic_search_csv_lookup.status is defined and elastic_search_csv_lookup.status.phase == 'Succeeded' and elastic_search_csv_lookup.status.reason == 'InstallSucceeded'
-    retries: 6
-    delay: 10
-  - name: "Set elastic_search csv fact"
-    set_fact:
-      elastic_search_csv: "{{ elastic_search_csv_lookup }}"
+    - debug:
+        msg: "Waiting Elastic Search Che csv to be available"
+      until: elastic_search_csv_lookup.status is defined and elastic_search_csv_lookup.status.phase == 'Succeeded' and elastic_search_csv_lookup.status.reason == 'InstallSucceeded'
+      retries: 6
+      delay: 10
+    - name: "Set elastic_search csv fact"
+      set_fact:
+        elastic_search_csv: "{{ elastic_search_csv_lookup }}"
 
 # ### Jaeger
 - name: "Create Jaeger subscription"
   k8s:
-   state: present
-   definition: "{{ lookup('file','subscriptions/jaeger/subscription.yaml') }}"
+    state: present
+    definition: "{{ lookup('file','subscriptions/jaeger/subscription.yaml') }}"
   register: jaeger_sub_created
 
 - name: "Lookup Jaeger csv"
   vars:
-   jaeger_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='jaeger-operator.v'+stack_jaeger.version, namespace='openshift-operators' ) }}"
+    jaeger_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='jaeger-operator.v'+stack_jaeger.version, namespace='openshift-operators' ) }}"
   block:
-  - debug:
-      msg: "Waiting Jaeger Che csv to be available"
-    until: jaeger_csv_lookup.status is defined and jaeger_csv_lookup.status.phase == 'Succeeded' and jaeger_csv_lookup.status.reason == 'InstallSucceeded'
-    retries: 6
-    delay: 10
-  - name: "Set Jaeger csv fact"
-    set_fact:
-      jaeger_csv: "{{ jaeger_csv_lookup }}"
+    - debug:
+        msg: "Waiting Jaeger Che csv to be available"
+      until: jaeger_csv_lookup.status is defined and jaeger_csv_lookup.status.phase == 'Succeeded' and jaeger_csv_lookup.status.reason == 'InstallSucceeded'
+      retries: 6
+      delay: 10
+    - name: "Set Jaeger csv fact"
+      set_fact:
+        jaeger_csv: "{{ jaeger_csv_lookup }}"
 
 # ### Kiali
 - name: "Create Kiali subscription"
   k8s:
-   state: present
-   definition: "{{ lookup('file','subscriptions/kiali/subscription.yaml') }}"
+    state: present
+    definition: "{{ lookup('file','subscriptions/kiali/subscription.yaml') }}"
   register: kiali_sub_created
 
 - name: "Lookup Kiali csv"
   vars:
     kiali_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='kiali-operator.v'+stack_kiali.version, namespace='openshift-operators' ) }}"
   block:
-  - debug:
-      msg: "Waiting Kiali Che csv to be available"
-    until: kiali_csv_lookup.status is defined and kiali_csv_lookup.status.phase == 'Succeeded' and kiali_csv_lookup.status.reason == 'InstallSucceeded'
-    retries: 6
-    delay: 10
-  - name: "Set Kiali csv fact"
-    set_fact:
-      kiali_csv: "{{ kiali_csv_lookup }}"
+    - debug:
+        msg: "Waiting Kiali Che csv to be available"
+      until: kiali_csv_lookup.status is defined and kiali_csv_lookup.status.phase == 'Succeeded' and kiali_csv_lookup.status.reason == 'InstallSucceeded'
+      retries: 6
+      delay: 10
+    - name: "Set Kiali csv fact"
+      set_fact:
+        kiali_csv: "{{ kiali_csv_lookup }}"
 
 #### Servicemesh
 - name: "Create Servicemesh subscription"
   k8s:
-   state: present
-   definition: "{{ lookup('file','subscriptions/servicemesh/subscription.yaml') }}"
+    state: present
+    definition: "{{ lookup('file','subscriptions/servicemesh/subscription.yaml') }}"
   register: servicemesh_sub_created
 
 - name: "Lookup Servicemesh csv"
   vars:
     servicemesh_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='servicemeshoperator.v'+stack_servicemesh.version, namespace='openshift-operators' ) }}"
   block:
-  - debug:
-      msg: "Waiting Servicemesh Che csv to be available"
-    until: servicemesh_csv_lookup.status is defined and servicemesh_csv_lookup.status.phase == 'Succeeded' and servicemesh_csv_lookup.status.reason == 'InstallSucceeded'
-    retries: 6
-    delay: 10
-  - name: "Set Servicemesh csv fact"
-    set_fact:
-      servicemesh_csv_lookup_csv: "{{ servicemesh_csv_lookup }}"
+    - debug:
+        msg: "Waiting Servicemesh Che csv to be available"
+      until: servicemesh_csv_lookup.status is defined and servicemesh_csv_lookup.status.phase == 'Succeeded' and servicemesh_csv_lookup.status.reason == 'InstallSucceeded'
+      retries: 6
+      delay: 10
+    - name: "Set Servicemesh csv fact"
+      set_fact:
+        servicemesh_csv_lookup_csv: "{{ servicemesh_csv_lookup }}"
 
 - name: "Install Servicemesh Control Plane"
   k8s:
@@ -121,13 +121,13 @@
     istio_pods_lookup: "{{ lookup('k8s', api_version='v1', kind='Pod',namespace='istio-system') }}"
     pod_status_query: "[*].status.phase"
   block:
-  - debug:
-      msg: "Waiting Servicemesh Pods to be running"
-    until: istio_pods_lookup and (istio_pods_lookup | json_query(pod_status_query)|unique == ["Running"])
-    register: all_istio_pods_up
-    ignore_errors: true
-    retries: 60
-    delay: 20
-  - name: "Set Servicemesh pods statuses fact"
-    set_fact:
-      servicemesh_pods_statuses: "{{ istio_pods_lookup }}"
+    - debug:
+        msg: "Waiting Servicemesh Pods to be running"
+      until: istio_pods_lookup and (istio_pods_lookup | json_query(pod_status_query)|unique == ["Running"])
+      register: all_istio_pods_up
+      ignore_errors: true
+      retries: 60
+      delay: 20
+    - name: "Set Servicemesh pods statuses fact"
+      set_fact:
+        servicemesh_pods_statuses: "{{ istio_pods_lookup }}"

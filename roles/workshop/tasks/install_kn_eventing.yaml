@@ -8,19 +8,19 @@
 
 - name: "Create Knative Eventing subscription"
   k8s:
-   state: present
-   definition: "{{ lookup('file','subscriptions/knative_eventing/subscription.yaml') }}"
+    state: present
+    definition: "{{ lookup('file','subscriptions/knative_eventing/subscription.yaml') }}"
   register: kn_eventing_sub_created
 
 - name: "Lookup Knative Eventing csv"
   vars:
     kn_eventing_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='knative-eventing-operator.v'+stack_kn_eventing.version, namespace='openshift-operators' ) }}"
   block:
-  - debug:
-      msg: "Waiting Knative Eventing csv to be available"
-    until: kn_eventing_csv_lookup.status is defined and kn_eventing_csv_lookup.status.phase == 'Succeeded' and kn_eventing_csv_lookup.status.reason == 'InstallSucceeded'
-    retries: 6
-    delay: 10
-  - name: "Set Knative Eventing  csv fact"
-    set_fact:
-     kn_eventing_csv: "{{kn_eventing_csv_lookup }}"
+    - debug:
+        msg: "Waiting Knative Eventing csv to be available"
+      until: kn_eventing_csv_lookup.status is defined and kn_eventing_csv_lookup.status.phase == 'Succeeded' and kn_eventing_csv_lookup.status.reason == 'InstallSucceeded'
+      retries: 6
+      delay: 10
+    - name: "Set Knative Eventing  csv fact"
+      set_fact:
+        kn_eventing_csv: "{{kn_eventing_csv_lookup }}"

@@ -3,28 +3,28 @@
 ############################
 - name: "Create Eclipse Che Project"
   k8s:
-   state: present
-   api_version: "project.openshift.io/v1"
-   kind: "Project"
-   name: "che"
+    state: present
+    api_version: "project.openshift.io/v1"
+    kind: "Project"
+    name: "che"
 
 - name: "Create Eclipse Che subscription"
   k8s:
-   state: present
-   definition: "{{ lookup('file','subscriptions/che/subscription.yaml') }}"
+    state: present
+    definition: "{{ lookup('file','subscriptions/che/subscription.yaml') }}"
   register: che_sub_created
 
 - name: "Lookup Eclipse Che csv"
   vars:
     eclipse_csv_lookup: "{{ lookup('k8s', api_version='operators.coreos.com/v1alpha1', kind='ClusterServiceVersion', resource_name='eclipse-che.v'+ stacks.che_version, namespace='che' ) }}"
   block:
-  - debug:
-      msg: "Waiting Eclipse Che csv to be available"
-    until: eclipse_csv_lookup.status is defined and eclipse_csv_lookup.status.phase == 'Succeeded' and eclipse_csv_lookup.status.reason == 'InstallSucceeded'
-  - name: "Set Eclipse Che csv fact"
-    set_fact:
-      eclipse_csv: "{{ eclipse_csv_lookup }}"
-      install_eclipse_che: "{{ eclipse_csv_lookup.status is defined and eclipse_csv_lookup.status.phase == 'Succeeded' and eclipse_csv_lookup.status.reason == 'InstallSucceeded' }}"
+    - debug:
+        msg: "Waiting Eclipse Che csv to be available"
+      until: eclipse_csv_lookup.status is defined and eclipse_csv_lookup.status.phase == 'Succeeded' and eclipse_csv_lookup.status.reason == 'InstallSucceeded'
+    - name: "Set Eclipse Che csv fact"
+      set_fact:
+        eclipse_csv: "{{ eclipse_csv_lookup }}"
+        install_eclipse_che: "{{ eclipse_csv_lookup.status is defined and eclipse_csv_lookup.status.phase == 'Succeeded' and eclipse_csv_lookup.status.reason == 'InstallSucceeded' }}"
 
 - name: "Install Eclipse Che"
   k8s:
@@ -36,23 +36,23 @@
   vars:
     che_keycloak_lookup: "{{ lookup('k8s', api_version='route.openshift.io/v1',kind='Route',resource_name='keycloak',namespace='che') }}"
   block:
-  - debug:
-      msg: "Waiting Eclipse Che Keycloak route to be available"
-    retries: 12
-    delay: 10
-    until: "'spec' in che_keycloak_lookup"
-  - name: "Set Eclipse Che Keycloak route fact"
-    set_fact:
-      che_keycloak: "{{ che_keycloak_lookup }}"
+    - debug:
+        msg: "Waiting Eclipse Che Keycloak route to be available"
+      retries: 12
+      delay: 10
+      until: "'spec' in che_keycloak_lookup"
+    - name: "Set Eclipse Che Keycloak route fact"
+      set_fact:
+        che_keycloak: "{{ che_keycloak_lookup }}"
 
 - name: "Wait until Che Keycloak is up"
-  uri: 
+  uri:
     url: "http://{{che_keycloak.spec.host}}"
     return_content: no
     validate_certs: no
   register: che_keycloak_status
-  when:  state == 'present' and che_keycloak.spec.host is defined
-  until: che_keycloak_status.status == 200 
+  when: state == 'present' and che_keycloak.spec.host is defined
+  until: che_keycloak_status.status == 200
   retries: 18
   delay: 10
 
@@ -60,23 +60,23 @@
   vars:
     che_lookup: "{{ lookup('k8s', api_version='route.openshift.io/v1',kind='Route',resource_name='che',namespace='che') }}"
   block:
-  - debug:
-      msg: "Waiting Eclipse Che route to be available"
-    retries: 30
-    delay: 10
-    until: "'spec' in che_lookup"
-  - name: "Set Eclipse Che route fact"
-    set_fact:
-      eclipse_che: "{{ che_lookup }}"
+    - debug:
+        msg: "Waiting Eclipse Che route to be available"
+      retries: 30
+      delay: 10
+      until: "'spec' in che_lookup"
+    - name: "Set Eclipse Che route fact"
+      set_fact:
+        eclipse_che: "{{ che_lookup }}"
 
 - name: "Wait until Che is up"
-  uri: 
+  uri:
     url: "http://{{eclipse_che.spec.host}}"
     return_content: no
     validate_certs: no
   register: che_status
   when: state == 'present' and eclipse_che.spec.host is defined
-  until: che_status.status == 200 
+  until: che_status.status == 200
   retries: 30
   delay: 10
 
@@ -85,4 +85,6 @@
     che_url: "{{che_status.url}}"
     che_keycloak_url: "{{che_keycloak_status.url}}"
   when: state == 'present' and not che_status.failed and not che_keycloak_status.failed
-   
+
+- name: "Create Che Users"
+  include_tasks: create_che_users.yaml
