@@ -16,16 +16,16 @@
   register: ocpadmin_added
   when: htpasswd_out.changed
 
-- name: "Add Cluster Admin Role to ocpadmin"
+- name: "Remove old OAuth httpasswd secret"
   k8s:
-    state: present
-    resource_definition: "{{ lookup('file','rb_ocpadmin.yaml') }}"
-  when: ocpadmin_added.changed
-
+    state: absent
+    kind: Secret
+    name: "htpass-secret"
+    namespace: "openshift-config"
+  
 - name: "Create OAuth httpasswd secret"
   k8s:
     state: present
-    force: true
     definition: |
       apiVersion: v1
       kind: Secret
@@ -42,6 +42,12 @@
     state: present
     resource_definition: "{{ lookup('file','htpasswd_provider.yaml') }}"
   when: htpasswd_out.changed
+
+- name: "Add Cluster Admin Role to ocpadmin"
+  k8s:
+    state: present
+    resource_definition: "{{ lookup('file','rb_ocpadmin.yaml') }}"
+  when: ocpadmin_added.changed
 
 # TODO Check if needed
 # - name: "Apply Network Policy"
