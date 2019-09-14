@@ -9,3 +9,5 @@ spec:
   source: rhd-workshop-packages
   name: kiali-ossm 
   sourceNamespace: openshift-operators
+  startingCSV: "{{'kiali-operator.v'+stack_kiali.version}}"
+  installPlanApproval: "{{approval_mode}}"

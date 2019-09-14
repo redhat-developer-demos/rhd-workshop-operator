@@ -25,6 +25,7 @@ metadata:
 spec:
   channel: stable
   name: eclipse-che
-  # add csv info to pin to version
+  startingCSV: "{{'eclipse-che.v'+stacks.che_version}}"
+  installPlanApproval: "{{approval_mode}}"
   source:  rhd-workshop-che
   sourceNamespace: che

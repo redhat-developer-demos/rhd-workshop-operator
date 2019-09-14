@@ -1,3 +1,7 @@
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Automatic"
+
 - name: "OpenShift Pipelines Operator Fact"
   vars:
     stack_pipelines_query: "community[?name=='pipelines'] | [0]"
@@ -9,7 +13,7 @@
 - name: "Create OpenShift Pipelines subscription"
   k8s:
     state: present
-    definition: "{{ lookup('file','subscriptions/pipelines/subscription.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/pipelines/subscription.yaml.j2') }}"
   register: pipelines_sub_created
 
 - name: "Lookup OpenShift Pipelines csv"
@@ -24,3 +28,12 @@
     - name: "Set OpenShift Pipelines  csv fact"
       set_fact:
         pipelines_csv: "{{pipelines_csv_lookup }}"
+
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Manual"
+
+- name: "Patch OpenShift Pipelines subscription"
+  k8s:
+    state: present
+    definition: "{{ lookup('template','subscriptions/pipelines/subscription.yaml.j2') }}"

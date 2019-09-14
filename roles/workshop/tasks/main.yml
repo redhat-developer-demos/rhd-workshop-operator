@@ -1,57 +1,9 @@
 ---
 
-- name: "Create workshop OpenShift users"
-  include_tasks: create_workshop_users.yaml
-  when: users.create
+- name: "Create Workshop"
+  include_tasks: create_workshops.yaml
+  when: not delete_workshop
 
-############################
-## Operators
-############################
-
-- name: "Create Community Catalog Sources"
-  k8s:
-    state: present
-    definition: "{{ lookup('template','catalog_sources.yaml.j2') }}"
-  when: stacks.install
-
-- name: "Create Red Hat Catalog Sources"
-  k8s:
-    state: present
-    definition: "{{ lookup('template','rh_catalog_sources.yaml.j2') }}"
-  when: stacks.install
-
-- name: "Install Image Cachier"
-  include_tasks: install_image_cachier.yaml
-  when: stacks.install
-
-- name: "Install Eclipse Che"
-  include_tasks: install_che.yaml
-  when: stacks.install
-
-- name: "Get Stacks"
-  set_fact:
-    stack_names: "{{ (stacks|json_query('community[*].name')) | union((stacks|json_query('redhat[*].name'))) }}"
-
-- name: "Install Servicemesh"
-  include_tasks: install_servicemesh.yaml
-  when: "stacks.install and 'servicemesh' in stack_names"
-
-- name: "Install Knative Serving"
-  include_tasks: install_kn_serving.yaml
-  when: "stacks.install and  'knative-serving' in stack_names"
-
-- name: "Install OpenShift Pipelines"
-  include_tasks: install_pipelines.yaml
-  when: "stacks.install and 'pipelines' in stack_names"
-
-- name: "Install Knative Eventing"
-  include_tasks: install_kn_eventing.yaml
-  when: "stacks.install and  'knative-eventing' in stack_names"
-
-- name: "Remove kubeadmin user"
-  k8s:
-    kind: Secret
-    namespace: kube-system
-    name: kubeadmin
-    state: absent
-  when: users.create or htpasswd_out.changed
+- name: "Delete Workshop"
+  include_tasks: delete_workshop.yaml
+  when:  delete_workshop

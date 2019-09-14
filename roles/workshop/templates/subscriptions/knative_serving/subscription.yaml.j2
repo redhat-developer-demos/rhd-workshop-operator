@@ -9,3 +9,5 @@ spec:
   source: rhd-workshop-packages-community
   name: knative-serving-operator
   sourceNamespace: openshift-operators
+  startingCSV: "{{'knative-serving-operator.v'+stack_kn_serving.version}}"
+  installPlanApproval: "{{approval_mode}}"

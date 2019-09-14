@@ -1,3 +1,7 @@
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Automatic"
+
 - name: "Knative Eventing Operator Fact"
   vars:
     stack_kn_eventing_query: "community[?name=='knative-eventing'] | [0]"
@@ -9,7 +13,7 @@
 - name: "Create Knative Eventing subscription"
   k8s:
     state: present
-    definition: "{{ lookup('file','subscriptions/knative_eventing/subscription.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/knative_eventing/subscription.yaml.j2') }}"
   register: kn_eventing_sub_created
 
 - name: "Lookup Knative Eventing csv"
@@ -24,3 +28,12 @@
     - name: "Set Knative Eventing  csv fact"
       set_fact:
         kn_eventing_csv: "{{kn_eventing_csv_lookup }}"
+
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Manual"
+
+- name: "Patch Knative Eventing subscription"
+  k8s:
+    state: present
+    definition: "{{ lookup('template','subscriptions/knative_eventing/subscription.yaml.j2') }}"

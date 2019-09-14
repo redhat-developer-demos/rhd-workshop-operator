@@ -1,4 +1,6 @@
 ---
+delete_workshop: False
+approval_mode: "Automatic"
 enable_che_keycloak_token_exchange: true
 platform: openshift
 openshift_api_server: "oauth-openshift.openshift-authentication:6443"

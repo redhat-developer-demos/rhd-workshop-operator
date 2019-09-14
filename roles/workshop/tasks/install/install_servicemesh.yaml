@@ -1,3 +1,8 @@
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Automatic"
+
+
 - name: "Elastic Search Operator Fact"
   vars:
     stack_es_query: "redhat[?name=='elastic-search'] | [0]"
@@ -34,7 +39,7 @@
 - name: "Create Elastic Search subscription"
   k8s:
     state: present
-    definition: "{{ lookup('file','subscriptions/elastic_search/subscription.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/elastic_search/subscription.yaml.j2') }}"
   register: elastic_search_sub_created
 
 - name: "Lookup Elastic Search csv"
@@ -54,7 +59,7 @@
 - name: "Create Jaeger subscription"
   k8s:
     state: present
-    definition: "{{ lookup('file','subscriptions/jaeger/subscription.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/jaeger/subscription.yaml.j2') }}"
   register: jaeger_sub_created
 
 - name: "Lookup Jaeger csv"
@@ -74,7 +79,7 @@
 - name: "Create Kiali subscription"
   k8s:
     state: present
-    definition: "{{ lookup('file','subscriptions/kiali/subscription.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/kiali/subscription.yaml.j2') }}"
   register: kiali_sub_created
 
 - name: "Lookup Kiali csv"
@@ -94,7 +99,7 @@
 - name: "Create Servicemesh subscription"
   k8s:
     state: present
-    definition: "{{ lookup('file','subscriptions/servicemesh/subscription.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/servicemesh/subscription.yaml.j2') }}"
   register: servicemesh_sub_created
 
 - name: "Lookup Servicemesh csv"
@@ -113,7 +118,7 @@
 - name: "Install Servicemesh Control Plane"
   k8s:
     state: "{{state}}"
-    definition: "{{ lookup('file','subscriptions/servicemesh/cr.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/servicemesh/cr.yaml.j2') }}"
 
 # TODO: Sometimes this slips when new pod creation takes bit of time and others are in 'Running state'
 - name: "Fetch all Servicemesh Pods and Check status"
@@ -131,3 +136,29 @@
     - name: "Set Servicemesh pods statuses fact"
       set_fact:
         servicemesh_pods_statuses: "{{ istio_pods_lookup }}"
+
+# Make all subscription updates to be manual
+
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Manual"
+
+- name: "Patch Elastic Search subscription"
+  k8s:
+    state: present
+    definition: "{{ lookup('template','subscriptions/elastic_search/subscription.yaml.j2') }}"
+
+- name: "Patch Jaeger subscription"
+  k8s:
+    state: present
+    definition: "{{ lookup('template','subscriptions/jaeger/subscription.yaml.j2') }}"
+
+- name: "Patch Kiali subscription"
+  k8s:
+    state: present
+    definition: "{{ lookup('template','subscriptions/kiali/subscription.yaml.j2') }}"
+  
+- name: "Patch Servicemesh subscription"
+  k8s:
+    state: present
+    definition: "{{ lookup('template','subscriptions/servicemesh/subscription.yaml.j2') }}"

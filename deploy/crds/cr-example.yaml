@@ -2,19 +2,23 @@ apiVersion: developers.redhat.com/v1alpha1
 kind: Workshop
 metadata:
   name: example-workshop
-  description: "Workshop Demo"
 spec:
+  # Delete a workshop
+  # delete_workshop: True
+  # Create Workshop
+  openshift_api_server: oauth-openshift.apps.example.com
   create_projects: True
   projects:
     - tutorial
   users:    
     create: True
     prefix: 'user'
-    password: 'openshift'
-    admin_password: 'superS3cret'
+    password: 'password'
+    admin_password: 'adminPassword'
     from: 0
     to: 50
   stacks:
+    install: true
     che_version: 7.1.0
     community:
       - name: "knative-serving"
@@ -28,7 +32,7 @@ spec:
         version: "0.5.2"
     redhat:
       - name: "elastic-search"
-        version: "4.1.14-201908291507"
+        version: "4.1.15-201909041605"
         operator: "elasticsearch-operator" 
       - name: "jaeger"
         version: "1.13.1"

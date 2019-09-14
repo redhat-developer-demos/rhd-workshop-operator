@@ -1,0 +1,46 @@
+---
+
+- name: "Delete OpenShift Pipelines"
+  k8s:
+    namespace: "openshift-pipelines"
+    api_version: "operator.tekton.dev/v1alpha"
+    kind: "Config"
+    name: "cluster"
+    state: absent
+  ignore_errors: True
+
+- name: "Delete Knative Eventing"
+  k8s:
+    namespace: "knative-eventing"
+    api_version: "eventing.knative.dev/v1alpha1"
+    kind: "KnativeEventing"
+    name: "knative-eventing"
+    state: absent
+  ignore_errors: True
+
+- name: "Delete Knative Serving"
+  k8s:
+    namespace: "knative-serving"
+    api_version: "serving.knative.dev/v1alpha1"
+    kind: "KnativeServing"
+    name: "knative-serving"
+    state: absent
+  ignore_errors: True
+
+- name: "Delete Service Mesh"
+  k8s:
+    namespace: "istio-system"
+    api_version: "maistra.io/v1"
+    kind: "ServiceMeshControlPlane"
+    name: "basic-install"
+    state: absent
+  ignore_errors: True
+
+- name: "Delete Eclipse Che"
+  k8s:
+    namespace: "che"
+    api_version: "org.eclipse.che/v1"
+    kind: "CheCluster"
+    name: "eclipse-che"
+    state: absent
+  ignore_errors: True

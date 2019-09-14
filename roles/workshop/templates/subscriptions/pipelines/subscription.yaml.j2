@@ -9,3 +9,5 @@ spec:
   source: rhd-workshop-packages-community
   name: openshift-pipelines-operator
   sourceNamespace: openshift-operators
+  startingCSV: "{{'openshift-pipelines-operator.v'+stack_pipelines.version}}"
+  installPlanApproval: "{{approval_mode}}"

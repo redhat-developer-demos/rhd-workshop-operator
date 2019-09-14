@@ -9,3 +9,5 @@ spec:
   source: rhd-workshop-packages
   name: servicemeshoperator 
   sourceNamespace: openshift-operators
+  startingCSV: "{{'servicemeshoperator.v'+stack_servicemesh.version}}"
+  installPlanApproval: "{{approval_mode}}"

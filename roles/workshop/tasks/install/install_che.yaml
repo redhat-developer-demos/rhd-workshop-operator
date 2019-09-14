@@ -1,6 +1,10 @@
 ############################
 ## Eclipse Che
 ############################
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Automatic"
+
 - name: "Create Eclipse Che Project"
   k8s:
     state: present
@@ -11,7 +15,7 @@
 - name: "Create Eclipse Che subscription"
   k8s:
     state: present
-    definition: "{{ lookup('file','subscriptions/che/subscription.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/che/subscription.yaml.j2') }}"
   register: che_sub_created
 
 - name: "Lookup Eclipse Che csv"
@@ -29,7 +33,7 @@
 - name: "Install Eclipse Che"
   k8s:
     state: "{{state}}"
-    definition: "{{ lookup('file','subscriptions/che/cr.yaml') }}"
+    definition: "{{ lookup('template','subscriptions/che/cr.yaml.j2') }}"
   when: install_eclipse_che
 
 - name: "Lookup Eclipse Che Keycloak"
@@ -86,5 +90,11 @@
     che_keycloak_url: "{{che_keycloak_status.url}}"
   when: state == 'present' and not che_status.failed and not che_keycloak_status.failed
 
-- name: "Create Che Users"
-  include_tasks: create_che_users.yaml
+- name: "Change approval mode to manual "
+  set_fact:
+    approval_mode: "Manual"
+
+- name: "Patch Eclipse Che subscription"
+  k8s:
+    state: present
+    definition: "{{ lookup('template','subscriptions/che/subscription.yaml.j2') }}"

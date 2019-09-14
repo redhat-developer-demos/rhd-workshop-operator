@@ -9,3 +9,5 @@ spec:
   source: rhd-workshop-packages
   name: jaeger-product
   sourceNamespace: openshift-operators
+  startingCSV: "{{'jaeger-operator.v'+stack_jaeger.version}}"
+  installPlanApproval: "{{approval_mode}}"

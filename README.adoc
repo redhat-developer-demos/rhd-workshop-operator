@@ -23,6 +23,8 @@ oc apply -n rhd-workshop-infra -f deploy/operator.yaml
 
 The following attributes are configurable via CR
 
+* `delete_workshop`: flag to delete the workshop, default `False`
+* `openshift_api_server`: the openshift authentication server `oauth-openshift.openshift-authentication:6443`
 * `create_projects`: flag to control whether to create workshop user OpenShift projects or not
 * `projects`: its the list of OpenShift that need to be created for each user
 
@@ -69,53 +71,6 @@ The operator uses **redhat-operators** as the source for the following packages:
    * `kiali`
    * `servicemesh`
 
-== Create a CR
+== Create a custom resource (CR)
 
-The following is an example CR, remove the stacks which might not be needed for the project:
-
-[source,yaml,subs="attributes+,+macros"]
-----
-apiVersion: developers.redhat.com/v1alpha1
-kind: Workshop
-metadata:
-  name: example-workshop
-  description: "Workshop Demo"
-spec:
-  create_projects: True
-  projects:
-    - tutorial
-  users:    
-    create: True
-    prefix: 'user'
-    password: 'openshift'
-    admin_password: 'superS3cret'
-    from: 0
-    to: 50
-  stacks:
-    che_version: 7.1.0
-    community:
-      - name: "knative-serving"
-        operator: "knative-serving-operator"
-        version: "0.7.1"
-      - name: "knative-eventing"
-        operator: "knative-eventing-operator"
-        version: "0.7.1"
-      - name: "pipelines"
-        operator: "openshift-pipelines-operator"
-        version: "0.5.2"
-    redhat:
-      - name: "elastic-search"
-        version: "4.1.14-201908291507"
-        operator: "elasticsearch-operator" 
-      - name: "jaeger"
-        version: "1.13.1"
-        operator: "jaeger-product"   
-      - name: "kiali"
-        version: "1.0.5"
-        operator: "kiali-ossm"
-        admin_username: "admin"
-        admin_password: "admin"
-      - name: "servicemesh"
-        version: "1.0.0"
-        operator: "servicemeshoperator"
-----
+Create an custom resource called **Workshop**, checkout the link:./deploy/crds/cr-example.yaml[Example]

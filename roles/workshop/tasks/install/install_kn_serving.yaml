@@ -1,3 +1,7 @@
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Automatic"
+
 - name: "Knative Serving Operator Fact"
   vars:
     stack_kn_serving_query: "community[?name=='knative-serving'] | [0]"
@@ -9,7 +13,7 @@
 - name: "Create Knative Serving subscription"
   k8s:
    state: present
-   definition: "{{ lookup('file','subscriptions/knative_serving/subscription.yaml') }}"
+   definition: "{{ lookup('template','subscriptions/knative_serving/subscription.yaml.j2') }}"
   register: kn_serving_sub_created
 
 - name: "Lookup Knative Serving csv"
@@ -24,3 +28,12 @@
   - name: "Set Knative Serving  csv fact"
     set_fact:
      kn_serving_csv: "{{kn_serving_csv_lookup }}"
+
+- name: "Set approval mode"
+  set_fact:
+   approval_mode: "Manual"
+
+- name: "Patch Knative Serving subscription"
+  k8s:
+   state: present
+   definition: "{{ lookup('template','subscriptions/knative_serving/subscription.yaml.j2') }}"

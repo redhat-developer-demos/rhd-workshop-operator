@@ -9,3 +9,5 @@ spec:
   source: rhd-workshop-packages-community
   name: knative-eventing-operator
   sourceNamespace: openshift-operators
+  startingCSV: "{{'knative-eventing-operator.v'+stack_kn_eventing.version}}"
+  installPlanApproval: "{{approval_mode}}"
