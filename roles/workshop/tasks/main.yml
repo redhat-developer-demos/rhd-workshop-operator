@@ -1,7 +1,7 @@
 ---
 
 - name: "Create Workshop"
-  include_tasks: create_workshops.yaml
+  include_tasks: create_workshop.yaml
   when: not delete_workshop
 
 - name: "Delete Workshop"

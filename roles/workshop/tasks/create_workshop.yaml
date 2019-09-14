@@ -21,7 +21,7 @@
   when: stacks.install
 
 - name: "Install Image Cachier"
-  include_tasks: install_image_cachier.yaml
+  include_tasks: install/install_image_cachier.yaml
   when: stacks.install
 
 - name: "Install Eclipse Che"
@@ -29,7 +29,7 @@
   when: stacks.install
 
 - name: "Create Che Users"
-  include_tasks: create_che_users.yaml
+  include_tasks: install/create_che_users.yaml
   when: users.create and stacks.install
 
 - name: "Get Stacks"
